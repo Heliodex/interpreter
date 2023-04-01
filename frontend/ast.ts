@@ -1,10 +1,8 @@
 // deno-lint-ignore-file no-empty-interface
 // https://github.com/tylerlaceby/guide-to-interpreters-series
 
-// -----------------------------------------------------------
-// --------------          AST TYPES        ------------------
-// ---     Defines the structure of our languages AST      ---
-// -----------------------------------------------------------
+// AST TYPES
+// Defines the structure of our languages AST
 
 export type NodeType =
 	// STATEMENTS
@@ -24,7 +22,8 @@ export type NodeType =
 
 /**
  * Statements do not result in a value at runtime.
- They contain one or more expressions internally */
+ * They contain one or more expressions internally 
+ */
 export interface Stmt {
 	kind: NodeType
 }
@@ -52,12 +51,12 @@ export interface FunctionDeclaration extends Stmt {
 	body: Stmt[]
 }
 
-/**  Expressions will result in a value at runtime unlike Statements */
+/** Expressions will result in a value at runtime unlike Statements */
 export interface Expr extends Stmt {}
 
 export interface AssignmentExpr extends Expr {
 	kind: "AssignmentExpr"
-	assigne: Expr
+	assignee: Expr
 	value: Expr
 }
 

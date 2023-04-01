@@ -73,13 +73,13 @@ export function eval_assignment(
 	node: AssignmentExpr,
 	env: Environment
 ): RuntimeVal {
-	if (node.assigne.kind !== "Identifier") {
+	if (node.assignee.kind != "Identifier") {
 		throw `Invalid LHS inaide assignment expr ${JSON.stringify(
-			node.assigne
+			node.assignee
 		)}`
 	}
 
-	const varname = (node.assigne as Identifier).symbol
+	const varname = (node.assignee as Identifier).symbol
 	return env.assignVar(varname, evaluate(node.value, env))
 }
 

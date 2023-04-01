@@ -26,24 +26,17 @@ export default class Parser {
 	/*
 	 * Determines if the parsing is complete and the END OF FILE Is reached.
 	 */
-	private not_eof(): boolean {
-		return this.tokens[0].type != TokenType.EOF
-	}
+	private not_eof = (): boolean => this.tokens[0].type != TokenType.EOF
 
 	/**
 	 * Returns the currently available token
 	 */
-	private at() {
-		return this.tokens[0] as Token
-	}
+	private at = () => this.tokens[0] as Token
 
 	/**
 	 * Returns the previous token and then advances the tokens array to the next value.
 	 */
-	private eat() {
-		const prev = this.tokens.shift() as Token
-		return prev
-	}
+	private eat = () => this.tokens.shift() as Token
 
 	/**
 	 * Returns the previous token and then advances the tokens array to the next value.
@@ -67,9 +60,7 @@ export default class Parser {
 		}
 
 		// Parse until end of file
-		while (this.not_eof()) {
-			program.body.push(this.parse_stmt())
-		}
+		while (this.not_eof()) program.body.push(this.parse_stmt())
 
 		return program
 	}
@@ -98,7 +89,7 @@ export default class Parser {
 		const args = this.parse_args()
 		const params: string[] = []
 		for (const arg of args) {
-			if (arg.kind !== "Identifier") {
+			if (arg.kind != "Identifier") {
 				console.log(arg)
 				throw "Inside function declaration expected parameters to be of type string."
 			}
@@ -113,11 +104,10 @@ export default class Parser {
 		const body: Stmt[] = []
 
 		while (
-			this.at().type !== TokenType.EOF &&
-			this.at().type !== TokenType.CloseBrace
-		) {
+			this.at().type != TokenType.EOF &&
+			this.at().type != TokenType.CloseBrace
+		)
 			body.push(this.parse_stmt())
-		}
 
 		this.expect(
 			TokenType.CloseBrace,
@@ -145,9 +135,8 @@ export default class Parser {
 
 		if (this.at().type == TokenType.Semicolon) {
 			this.eat() // expect semicolon
-			if (isConstant) {
-				throw "Must assigne value to constant expression. No value provided."
-			}
+			if (isConstant)
+				throw "Must assign value to constant expression. No value provided."
 
 			return {
 				kind: "VarDeclaration",
@@ -168,11 +157,6 @@ export default class Parser {
 			constant: isConstant,
 		} as VarDeclaration
 
-		this.expect(
-			TokenType.Semicolon,
-			"Variable declaration statment must end with semicolon."
-		)
-
 		return declaration
 	}
 
@@ -186,10 +170,9 @@ export default class Parser {
 
 		if (this.at().type == TokenType.Equals) {
 			this.eat() // advance past equals
-			const value = this.parse_assignment_expr()
 			return {
-				value,
-				assigne: left,
+				value: this.parse_assignment_expr(),
+				assignee: left,
 				kind: "AssignmentExpr",
 			} as AssignmentExpr
 		}
@@ -199,9 +182,8 @@ export default class Parser {
 
 	private parse_object_expr(): Expr {
 		// { Prop[] }
-		if (this.at().type !== TokenType.OpenBrace) {
+		if (this.at().type != TokenType.OpenBrace)
 			return this.parse_additive_expr()
-		}
 
 		this.eat() // advance past open brace.
 		const properties = new Array<Property>()
@@ -231,12 +213,11 @@ export default class Parser {
 			const value = this.parse_expr()
 
 			properties.push({ kind: "Property", value, key })
-			if (this.at().type != TokenType.CloseBrace) {
+			if (this.at().type != TokenType.CloseBrace)
 				this.expect(
 					TokenType.Comma,
 					"Expected comma or closing bracket following property"
 				)
-			}
 		}
 
 		this.expect(
@@ -250,13 +231,12 @@ export default class Parser {
 	private parse_additive_expr(): Expr {
 		let left = this.parse_multiplicitave_expr()
 
-		while (this.at().value == "+" || this.at().value == "-") {
+		while (["+", "-"].includes(this.at().value)) {
 			const operator = this.eat().value
-			const right = this.parse_multiplicitave_expr()
 			left = {
 				kind: "BinaryExpr",
 				left,
-				right,
+				right: this.parse_multiplicitave_expr(),
 				operator,
 			} as BinaryExpr
 		}
@@ -268,11 +248,7 @@ export default class Parser {
 	private parse_multiplicitave_expr(): Expr {
 		let left = this.parse_call_member_expr()
 
-		while (
-			this.at().value == "/" ||
-			this.at().value == "*" ||
-			this.at().value == "%"
-		) {
+		while (["/", "*", "%"].includes(this.at().value)) {
 			const operator = this.eat().value
 			const right = this.parse_call_member_expr()
 			left = {
@@ -290,9 +266,8 @@ export default class Parser {
 	private parse_call_member_expr(): Expr {
 		const member = this.parse_member_expr()
 
-		if (this.at().type == TokenType.OpenParen) {
+		if (this.at().type == TokenType.OpenParen)
 			return this.parse_call_expr(member)
-		}
 
 		return member
 	}
@@ -304,9 +279,8 @@ export default class Parser {
 			args: this.parse_args(),
 		} as CallExpr
 
-		if (this.at().type == TokenType.OpenParen) {
+		if (this.at().type == TokenType.OpenParen)
 			call_expr = this.parse_call_expr(call_expr)
-		}
 
 		return call_expr
 	}
@@ -328,9 +302,8 @@ export default class Parser {
 	private parse_arguments_list(): Expr[] {
 		const args = [this.parse_assignment_expr()]
 
-		while (this.at().type == TokenType.Comma && this.eat()) {
+		while (this.at().type == TokenType.Comma && this.eat())
 			args.push(this.parse_assignment_expr())
-		}
 
 		return args
 	}
@@ -351,9 +324,8 @@ export default class Parser {
 				computed = false
 				// get identifier
 				property = this.parse_primary_expr()
-				if (property.kind != "Identifier") {
+				if (property.kind != "Identifier")
 					throw `Cannonot use dot operator without right hand side being a identifier`
-				}
 			} else {
 				// this allows obj[computedValue]
 				computed = true

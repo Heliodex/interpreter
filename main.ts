@@ -2,15 +2,21 @@ import Parser from "./frontend/parser.ts"
 import { createGlobalEnv } from "./runtime/environment.ts"
 import { evaluate } from "./runtime/interpreter.ts"
 
-run("./test.txt")
-
-async function run(filename: string) {
-	const parser = new Parser()
-	const env = createGlobalEnv()
-
-	const input = await Deno.readTextFile(filename)
-	const program = parser.produceAST(input)
-
-	const result = evaluate(program, env)
-	// console.log(result);
+const filename = Deno.args[0]
+if (!filename) {
+	console.error("No file specified")
+	Deno.exit(1)
 }
+
+const parser = new Parser()
+const env = createGlobalEnv()
+
+let input
+try {
+	input = Deno.readTextFileSync(filename)
+} catch (e) {
+	console.error(`Failed to read file ${filename}:\n\n`, e)
+	Deno.exit(1)
+}
+
+evaluate(parser.produceAST(input), env)

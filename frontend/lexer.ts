@@ -1,8 +1,6 @@
 // https://github.com/tylerlaceby/guide-to-interpreters-series
-// -----------------------------------------------------------
-// ---------------          LEXER          -------------------
-// ---  Responsible for producing tokens from the source   ---
-// -----------------------------------------------------------
+// LEXER
+// Responsible for producing tokens from the source
 
 // Represents tokens that our language understands in parsing.
 export enum TokenType {
@@ -65,7 +63,7 @@ function isskippable(str: string) {
 }
 
 /**
- Return whether the character is a valid integer -> [0-9]
+ * Return whether the character is a valid integer -> [0-9]
  */
 function isint(str: string) {
 	const c = str.charCodeAt(0)
@@ -84,58 +82,43 @@ export function tokenize(sourceCode: string): Token[] {
 	const tokens = new Array<Token>()
 	const src = sourceCode.split("")
 
+	const table: { [k: string]: keyof typeof TokenType } = {
+		"(": "OpenParen",
+		")": "CloseParen",
+		"{": "OpenBrace",
+		"}": "CloseBrace",
+		"[": "OpenBracket",
+		"]": "CloseBracket",
+		"+": "BinaryOperator",
+		"-": "BinaryOperator",
+		"*": "BinaryOperator",
+		"/": "BinaryOperator",
+		"%": "BinaryOperator",
+		"=": "Equals",
+		";": "Semicolon",
+		",": "Comma",
+		".": "Dot",
+		":": "Colon",
+	}
+
 	// produce tokens until the EOF is reached.
 	while (src.length > 0) {
 		// BEGIN PARSING ONE CHARACTER TOKENS
-		if (src[0] == "(") {
-			tokens.push(token(src.shift(), TokenType.OpenParen))
-		} else if (src[0] == ")") {
-			tokens.push(token(src.shift(), TokenType.CloseParen))
-		} else if (src[0] == "{") {
-			tokens.push(token(src.shift(), TokenType.OpenBrace))
-		} else if (src[0] == "}") {
-			tokens.push(token(src.shift(), TokenType.CloseBrace))
-		} else if (src[0] == "[") {
-			tokens.push(token(src.shift(), TokenType.OpenBracket))
-		} else if (src[0] == "]") {
-			tokens.push(token(src.shift(), TokenType.CloseBracket))
-		} // HANDLE BINARY OPERATORS
-		else if (
-			src[0] == "+" ||
-			src[0] == "-" ||
-			src[0] == "*" ||
-			src[0] == "/" ||
-			src[0] == "%"
-		) {
-			tokens.push(token(src.shift(), TokenType.BinaryOperator))
-		} // Handle Conditional & Assignment Tokens
-		else if (src[0] == "=") {
-			tokens.push(token(src.shift(), TokenType.Equals))
-		} else if (src[0] == ";") {
-			tokens.push(token(src.shift(), TokenType.Semicolon))
-		} else if (src[0] == ":") {
-			tokens.push(token(src.shift(), TokenType.Colon))
-		} else if (src[0] == ",") {
-			tokens.push(token(src.shift(), TokenType.Comma))
-		} else if (src[0] == ".") {
-			tokens.push(token(src.shift(), TokenType.Dot))
-		} // HANDLE MULTICHARACTER KEYWORDS, TOKENS, IDENTIFIERS ETC...
+
+		const t = table[src[0]]
+		if (t) tokens.push(token(src.shift(), TokenType[t]))
 		else {
 			// Handle numeric literals -> Integers
 			if (isint(src[0])) {
 				let num = ""
-				while (src.length > 0 && isint(src[0])) {
-					num += src.shift()
-				}
+				while (src.length > 0 && isint(src[0])) num += src.shift()
 
 				// append new numeric token.
 				tokens.push(token(num, TokenType.Number))
 			} // Handle Identifier & Keyword Tokens.
 			else if (isalpha(src[0])) {
 				let ident = ""
-				while (src.length > 0 && isalpha(src[0])) {
-					ident += src.shift()
-				}
+				while (src.length > 0 && isalpha(src[0])) ident += src.shift()
 
 				// CHECK FOR RESERVED KEYWORDS
 				const reserved = KEYWORDS[ident]
@@ -161,6 +144,8 @@ export function tokenize(sourceCode: string): Token[] {
 				Deno.exit(1)
 			}
 		}
+
+		// HANDLE MULTICHARACTER KEYWORDS, TOKENS, IDENTIFIERS ETC...
 	}
 
 	tokens.push({ type: TokenType.EOF, value: "EndOfFile" })
