@@ -9,7 +9,7 @@ import Environment from "../environment.ts"
 import { evaluate } from "../interpreter.ts"
 import {
 	FunctionValue,
-	MK_NULL,
+	MK_NIL,
 	NativeFnValue,
 	NumberVal,
 	ObjectVal,
@@ -21,19 +21,15 @@ function eval_numeric_binary_expr(
 	rhs: NumberVal,
 	operator: string
 ): NumberVal {
-	let result: number
-	if (operator == "+") {
-		result = lhs.value + rhs.value
-	} else if (operator == "-") {
-		result = lhs.value - rhs.value
-	} else if (operator == "*") {
-		result = lhs.value * rhs.value
-	} else if (operator == "/") {
-		// TODO: Division by zero checks
+	let result
+
+	if (operator == "+") result = lhs.value + rhs.value
+	else if (operator == "-") result = lhs.value - rhs.value
+	else if (operator == "*") result = lhs.value * rhs.value
+	else if (operator == "/") {
+		if (rhs.value == 0) throw "Cannot divide by zero"
 		result = lhs.value / rhs.value
-	} else {
-		result = lhs.value % rhs.value
-	}
+	} else result = lhs.value % rhs.value
 
 	return { value: result, type: "number" }
 }
@@ -49,16 +45,15 @@ export function eval_binary_expr(
 	const rhs = evaluate(binop.right, env)
 
 	// Only currently support numeric operations
-	if (lhs.type == "number" && rhs.type == "number") {
+	if (lhs.type == "number" && rhs.type == "number")
 		return eval_numeric_binary_expr(
 			lhs as NumberVal,
 			rhs as NumberVal,
 			binop.operator
 		)
-	}
 
-	// One or both are NULL
-	return MK_NULL()
+	// One or both are NIL
+	return MK_NIL()
 }
 
 export function eval_identifier(
@@ -73,11 +68,10 @@ export function eval_assignment(
 	node: AssignmentExpr,
 	env: Environment
 ): RuntimeVal {
-	if (node.assignee.kind != "Identifier") {
+	if (node.assignee.kind != "Identifier")
 		throw `Invalid LHS inaide assignment expr ${JSON.stringify(
 			node.assignee
 		)}`
-	}
 
 	const varname = (node.assignee as Identifier).symbol
 	return env.assignVar(varname, evaluate(node.value, env))
@@ -102,10 +96,7 @@ export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
 	const args = expr.args.map(arg => evaluate(arg, env))
 	const fn = evaluate(expr.caller, env)
 
-	if (fn.type == "native-fn") {
-		const result = (fn as NativeFnValue).call(args, env)
-		return result
-	}
+	if (fn.type == "native-fn") return (fn as NativeFnValue).call(args, env)
 
 	if (fn.type == "function") {
 		const func = fn as FunctionValue
@@ -116,14 +107,12 @@ export function eval_call_expr(expr: CallExpr, env: Environment): RuntimeVal {
 			// TODO Check the bounds here.
 			// verify arity of function
 			const varname = func.parameters[i]
-			scope.declareVar(varname, args[i], false)
+			scope.declareVar(varname, args[i])
 		}
 
-		let result: RuntimeVal = MK_NULL()
+		let result: RuntimeVal = MK_NIL()
 		// Evaluate the function body line by line
-		for (const stmt of func.body) {
-			result = evaluate(stmt, scope)
-		}
+		for (const stmt of func.body) result = evaluate(stmt, scope)
 
 		return result
 	}

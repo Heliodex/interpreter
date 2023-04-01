@@ -11,7 +11,6 @@ import {
 	Program,
 	Property,
 	Stmt,
-	VarDeclaration,
 	FunctionDeclaration,
 } from "./ast.ts"
 
@@ -69,9 +68,6 @@ export default class Parser {
 	private parse_stmt(): Stmt {
 		// skip to parse_expr
 		switch (this.at().type) {
-			case TokenType.Let:
-			case TokenType.Const:
-				return this.parse_var_declaration()
 			case TokenType.Fn:
 				return this.parse_fn_declaration()
 			default:
@@ -124,46 +120,30 @@ export default class Parser {
 		return fn
 	}
 
-	// LET IDENT;
-	// ( LET | CONST ) IDENT = EXPR;
-	parse_var_declaration(): Stmt {
-		const isConstant = this.eat().type == TokenType.Const
-		const identifier = this.expect(
-			TokenType.Identifier,
-			"Expected identifier name following let | const keywords."
-		).value
+	// parse_var_declaration(): Stmt {
+	// 	if (this.at().type == TokenType.Semicolon) {
+	// 		this.eat() // expect semicolon
 
-		if (this.at().type == TokenType.Semicolon) {
-			this.eat() // expect semicolon
-			if (isConstant)
-				throw "Must assign value to constant expression. No value provided."
+	// 		return {
+	// 			kind: "VarDeclaration",
+	// 		} as VarDeclaration
+	// 	}
 
-			return {
-				kind: "VarDeclaration",
-				identifier,
-				constant: false,
-			} as VarDeclaration
-		}
+	// 	this.expect(
+	// 		TokenType.Equals,
+	// 		"Expected equals token following identifier in var declaration."
+	// 	)
 
-		this.expect(
-			TokenType.Equals,
-			"Expected equals token following identifier in var declaration."
-		)
+	// 	const declaration = {
+	// 		kind: "VarDeclaration",
+	// 		value: this.parse_expr(),
+	// 	} as VarDeclaration
 
-		const declaration = {
-			kind: "VarDeclaration",
-			value: this.parse_expr(),
-			identifier,
-			constant: isConstant,
-		} as VarDeclaration
-
-		return declaration
-	}
+	// 	return declaration
+	// }
 
 	// Handle expressions
-	private parse_expr(): Expr {
-		return this.parse_assignment_expr()
-	}
+	private parse_expr = (): Expr => this.parse_assignment_expr()
 
 	private parse_assignment_expr(): Expr {
 		const left = this.parse_object_expr()

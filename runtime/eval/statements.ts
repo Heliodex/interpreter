@@ -5,10 +5,10 @@ import {
 } from "../../frontend/ast.ts"
 import Environment from "../environment.ts"
 import { evaluate } from "../interpreter.ts"
-import { FunctionValue, MK_NULL, RuntimeVal } from "../values.ts"
+import { FunctionValue, MK_NIL, RuntimeVal } from "../values.ts"
 
 export function eval_program(program: Program, env: Environment): RuntimeVal {
-	let lastEvaluated: RuntimeVal = MK_NULL()
+	let lastEvaluated: RuntimeVal = MK_NIL()
 	for (const statement of program.body) {
 		lastEvaluated = evaluate(statement, env)
 	}
@@ -21,9 +21,9 @@ export function eval_var_declaration(
 ): RuntimeVal {
 	const value = declaration.value
 		? evaluate(declaration.value, env)
-		: MK_NULL()
+		: MK_NIL()
 
-	return env.declareVar(declaration.identifier, value, declaration.constant)
+	return env.declareVar(declaration.identifier, value)
 }
 
 export function eval_function_declaration(
@@ -39,5 +39,5 @@ export function eval_function_declaration(
 		body: declaration.body,
 	} as FunctionValue
 
-	return env.declareVar(declaration.name, fn, true)
+	return env.declareVar(declaration.name, fn)
 }

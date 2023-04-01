@@ -1,7 +1,7 @@
 import {
 	MK_BOOL,
 	MK_NATIVE_FN,
-	MK_NULL,
+	MK_NIL,
 	MK_NUMBER,
 	RuntimeVal,
 } from "./values.ts"
@@ -9,24 +9,23 @@ import {
 export function createGlobalEnv() {
 	const env = new Environment()
 	// Create Default Global Enviornment
-	env.declareVar("true", MK_BOOL(true), true)
-	env.declareVar("false", MK_BOOL(false), true)
-	env.declareVar("null", MK_NULL(), true)
+	env.declareVar("true", MK_BOOL(true))
+	env.declareVar("false", MK_BOOL(false))
+	env.declareVar("nil", MK_NIL())
 
 	// Define a native builtin method
 	env.declareVar(
 		"print",
-		MK_NATIVE_FN((args, scope) => {
+		MK_NATIVE_FN(args => {
 			console.log(...args)
-			return MK_NULL()
-		}),
-		true
+			return MK_NIL()
+		})
 	)
 
 	function timeFunction(_args: RuntimeVal[], _env: Environment) {
 		return MK_NUMBER(Date.now())
 	}
-	env.declareVar("time", MK_NATIVE_FN(timeFunction), true)
+	env.declareVar("time", MK_NATIVE_FN(timeFunction))
 
 	return env
 }
@@ -34,40 +33,21 @@ export function createGlobalEnv() {
 export default class Environment {
 	private parent?: Environment
 	private variables: Map<string, RuntimeVal>
-	private constants: Set<string>
 
 	constructor(parentENV?: Environment) {
-		const global = parentENV ? true : false
+		// const global = parentENV ? true : false
 		this.parent = parentENV
 		this.variables = new Map()
-		this.constants = new Set()
 	}
 
-	public declareVar(
-		varname: string,
-		value: RuntimeVal,
-		constant: boolean
-	): RuntimeVal {
-		if (this.variables.has(varname)) {
-			throw `Cannot declare variable ${varname}. As it already is defined.`
-		}
-
+	public declareVar(varname: string, value: RuntimeVal): RuntimeVal {
 		this.variables.set(varname, value)
-		if (constant) {
-			this.constants.add(varname)
-		}
+
 		return value
 	}
 
 	public assignVar(varname: string, value: RuntimeVal): RuntimeVal {
-		const env = this.resolve(varname)
-
-		// Cannot assign to constant
-		if (env.constants.has(varname)) {
-			throw `Cannot reasign to variable ${varname} as it was declared constant.`
-		}
-
-		env.variables.set(varname, value)
+		this.variables.set(varname, value)
 		return value
 	}
 
@@ -77,10 +57,7 @@ export default class Environment {
 	}
 
 	public resolve(varname: string): Environment {
-		if (this.variables.has(varname)) return this
-
-		if (this.parent == undefined)
-			throw `Cannot resolve '${varname}' as it does not exist.`
+		if (this.variables.has(varname) || this.parent == undefined) return this
 
 		return this.parent.resolve(varname)
 	}

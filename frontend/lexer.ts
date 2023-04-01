@@ -8,8 +8,6 @@ export enum TokenType {
 	Number,
 	Identifier,
 	// Keywords
-	Let,
-	Const,
 	Fn, // fn
 
 	// Grouping * Operators
@@ -32,8 +30,6 @@ export enum TokenType {
  * Constant lookup for keywords and known identifiers + symbols.
  */
 const KEYWORDS: Record<string, TokenType> = {
-	let: TokenType.Let,
-	const: TokenType.Const,
 	fn: TokenType.Fn,
 }
 
@@ -44,23 +40,17 @@ export interface Token {
 }
 
 // Returns a token of a given type and value
-function token(value = "", type: TokenType): Token {
-	return { value, type }
-}
+const token = (value = "", type: TokenType): Token => ({ value, type })
 
 /**
  * Returns whether the character passed in alphabetic -> [a-zA-Z]
  */
-function isalpha(src: string) {
-	return src.toUpperCase() != src.toLowerCase()
-}
+const isalpha = (src: string) => src.toUpperCase() != src.toLowerCase()
 
 /**
  * Returns true if the character is whitespace like -> [\s, \t, \n]
  */
-function isskippable(str: string) {
-	return str == " " || str == "\n" || str == "\t" || str == "\r"
-}
+const isskippable = (str: string) => [" ", "\n", "\t", "\r"].includes(str)
 
 /**
  * Return whether the character is a valid integer -> [0-9]
@@ -124,16 +114,14 @@ export function tokenize(sourceCode: string): Token[] {
 				const reserved = KEYWORDS[ident]
 				// If value is not undefined then the identifier is
 				// reconized keyword
-				if (typeof reserved == "number") {
+				if (typeof reserved == "number")
 					tokens.push(token(ident, reserved))
-				} else {
-					// Unreconized name must mean user defined symbol.
-					tokens.push(token(ident, TokenType.Identifier))
-				}
-			} else if (isskippable(src[0])) {
+				// Unreconized name must mean user defined symbol.
+				else tokens.push(token(ident, TokenType.Identifier))
+			} else if (isskippable(src[0]))
 				// Skip uneeded chars.
 				src.shift()
-			} // Handle unreconized characters.
+			// Handle unreconized characters.
 			// TODO: Impliment better errors and error recovery.
 			else {
 				console.error(
